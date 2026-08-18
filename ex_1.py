@@ -127,6 +127,8 @@ print(f"표층 수심: {surface_depth:.0f} m")
 print(f"표층 수온: {surface_temp:.3f} °C")
 print(f"표층 염분: {surface_salinity:.3f} ‰")
 print(f"표층 밀도: {surface_density:.3f} kg/m³")
+swSur_density=seawater.dens(surface_salinity, surface_temp, 0)
+print(f"seawater 패키지로 계산한 표층 밀도: {swSur_density:.3f} kg/m³")
 
 print()
 
@@ -134,7 +136,9 @@ print(f"저층 수심: {bottom_depth:.0f} m")
 print(f"저층 수온: {bottom_temp:.3f} °C")
 print(f"저층 염분: {bottom_salinity:.3f} ‰")
 print(f"저층 밀도: {bottom_density:.3f} kg/m³")
-
+swBot_density=seawater.dens(bottom_salinity, bottom_temp, 5500)
+print(f"seawater 패키지로 계산한 저층 밀도: {swBot_density:.3f} kg/m³")
 print()
 
 print(f"표층과 저층의 밀도 차이: {density_difference:.3f} kg/m³")
+print(f"seawater 패키지로 계산한 밀도 차이: {swBot_density - swSur_density:.3f} kg/m³")
