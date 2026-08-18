@@ -10,9 +10,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seawater
+plt.rcParams["font.family"] = "Malgun Gothic"
+plt.rcParams["axes.unicode_minus"] = False
+
+df = pd.read_excel("./ex_1/data/data.xlsx")
 # - 국립수산과학원 정선해양조사자료 활용 (동해-104 line)
-# plt.rcParams["font.family"] = "Malgun Gothic"
-# plt.rcParams["axes.unicode_minus"] = False
+
 # depth = [0, 10, 20, 30, 50, 75, 100, 125, 150, 200]
 
 # temp = [24.25, 14.39, 10.87, 9.94, 7.89, 5.89, 4.34, 2.99, 1.72, 1.47]
@@ -63,82 +66,136 @@ import seawater
 
 
 # - 표층과 저층의 밀도 차이 비교
-df = pd.read_excel("./ex_1/data/data.xlsx")
 
-depth = pd.to_numeric(df.columns, errors="coerce")
-temperature = pd.to_numeric(df.iloc[0, :], errors="coerce")
-salinity = pd.to_numeric(df.iloc[1, :], errors="coerce")
+# depth = pd.to_numeric(df.columns, errors="coerce")
+# temperature = pd.to_numeric(df.iloc[0, :], errors="coerce")
+# salinity = pd.to_numeric(df.iloc[1, :], errors="coerce")
 
-profile = pd.DataFrame({
-    "수심(m)": depth,
-    "수온(°C)": temperature.values,
-    "염분(‰)": salinity.values
-})
+# profile = pd.DataFrame({
+#     "수심(m)": depth,
+#     "수온(°C)": temperature.values,
+#     "염분(‰)": salinity.values
+# })
 
-profile = profile.dropna()
-profile = profile.sort_values("수심(m)").reset_index(drop=True)
+# profile = profile.dropna()
+# profile = profile.sort_values("수심(m)").reset_index(drop=True)
 
-surface = profile.iloc[0]
-bottom = profile.iloc[-1]
+# surface = profile.iloc[0]
+# bottom = profile.iloc[-1]
 
-surface_depth = surface["수심(m)"]
-surface_temp = surface["수온(°C)"]
-surface_salinity = surface["염분(‰)"]
+# surface_depth = surface["수심(m)"]
+# surface_temp = surface["수온(°C)"]
+# surface_salinity = surface["염분(‰)"]
 
-bottom_depth = bottom["수심(m)"]
-bottom_temp = bottom["수온(°C)"]
-bottom_salinity = bottom["염분(‰)"]
+# bottom_depth = bottom["수심(m)"]
+# bottom_temp = bottom["수온(°C)"]
+# bottom_salinity = bottom["염분(‰)"]
 
-a_bar = 0.15
-b_bar = 0.78
-k_bar = 4.5e-3
+# a_bar = 0.15
+# b_bar = 0.78
+# k_bar = 4.5e-3
 
-rho_0 = 1027
-T_0 = 10
-S_0 = 35
+# rho_0 = 1027
+# T_0 = 10
+# S_0 = 35
 
-def calculate_density(temperature, salinity, depth):
-    pressure = depth
+# def calculate_density(temperature, salinity, depth):
+#     pressure = depth
 
-    density = (
-        rho_0
-        - a_bar * (temperature - T_0)
-        + b_bar * (salinity - S_0)
-        + k_bar * pressure
-    )
+#     density = (
+#         rho_0
+#         - a_bar * (temperature - T_0)
+#         + b_bar * (salinity - S_0)
+#         + k_bar * pressure
+#     )
 
-    return density
+#     return density
 
-surface_density = calculate_density(
-    surface_temp,
-    surface_salinity,
-    surface_depth
+# surface_density = calculate_density(
+#     surface_temp,
+#     surface_salinity,
+#     surface_depth
+# )
+
+# bottom_density = calculate_density(
+#     bottom_temp,
+#     bottom_salinity,
+#     bottom_depth
+# )
+
+# density_difference = bottom_density - surface_density
+
+# print(f"표층 수심: {surface_depth:.0f} m")
+# print(f"표층 수온: {surface_temp:.3f} °C")
+# print(f"표층 염분: {surface_salinity:.3f} ‰")
+# print(f"표층 밀도: {surface_density:.3f} kg/m³")
+# swSur_density=seawater.dens(surface_salinity, surface_temp, 0)
+# print(f"seawater 패키지로 계산한 표층 밀도: {swSur_density:.3f} kg/m³")
+
+# print()
+
+# print(f"저층 수심: {bottom_depth:.0f} m")
+# print(f"저층 수온: {bottom_temp:.3f} °C")
+# print(f"저층 염분: {bottom_salinity:.3f} ‰")
+# print(f"저층 밀도: {bottom_density:.3f} kg/m³")
+# swBot_density=seawater.dens(bottom_salinity, bottom_temp, 5500)
+# print(f"seawater 패키지로 계산한 저층 밀도: {swBot_density:.3f} kg/m³")
+# print()
+
+# print(f"표층과 저층의 밀도 차이: {density_difference:.3f} kg/m³")
+# print(f"seawater 패키지로 계산한 밀도 차이: {swBot_density - swSur_density:.3f} kg/m³")
+
+# Ex1-4: 관측자료를 이용하여 T-S diagram 작성 및 설명
+temp = pd.to_numeric(df.iloc[0], errors="coerce")
+salt = pd.to_numeric(df.iloc[1], errors="coerce")
+
+valid = temp.notna() & salt.notna()
+
+temp = temp[valid]
+salt = salt[valid]
+
+smin = salt.min() - 0.5
+smax = salt.max() + 0.5
+tmin = temp.min() - 1
+tmax = temp.max() + 1
+
+saltL = np.linspace(smin, smax, 200)
+tempL = np.linspace(tmin, tmax, 200)
+
+Sg, Tg = np.meshgrid(saltL, tempL)
+
+dens = seawater.dens0(Sg, Tg) - 1000
+
+plt.figure(figsize=(7, 6))
+
+CS = plt.contour(
+    Sg,
+    Tg,
+    dens,
+    levels=np.arange(20, 31, 1),
+    linestyles="dashed",
+    colors="grey"
 )
 
-bottom_density = calculate_density(
-    bottom_temp,
-    bottom_salinity,
-    bottom_depth
+plt.clabel(
+    CS,
+    fontsize=10,
+    inline=True,
+    fmt="%.0f"
 )
 
-density_difference = bottom_density - surface_density
+plt.scatter(
+    salt,
+    temp,
+    s=20
+)
 
-print(f"표층 수심: {surface_depth:.0f} m")
-print(f"표층 수온: {surface_temp:.3f} °C")
-print(f"표층 염분: {surface_salinity:.3f} ‰")
-print(f"표층 밀도: {surface_density:.3f} kg/m³")
-swSur_density=seawater.dens(surface_salinity, surface_temp, 0)
-print(f"seawater 패키지로 계산한 표층 밀도: {swSur_density:.3f} kg/m³")
+plt.xlabel("Salinity (PSU)")
+plt.ylabel("Temperature (°C)")
+plt.title("T-S Diagram")
 
-print()
+plt.xlim(smin, smax)
+plt.ylim(tmin, tmax)
 
-print(f"저층 수심: {bottom_depth:.0f} m")
-print(f"저층 수온: {bottom_temp:.3f} °C")
-print(f"저층 염분: {bottom_salinity:.3f} ‰")
-print(f"저층 밀도: {bottom_density:.3f} kg/m³")
-swBot_density=seawater.dens(bottom_salinity, bottom_temp, 5500)
-print(f"seawater 패키지로 계산한 저층 밀도: {swBot_density:.3f} kg/m³")
-print()
-
-print(f"표층과 저층의 밀도 차이: {density_difference:.3f} kg/m³")
-print(f"seawater 패키지로 계산한 밀도 차이: {swBot_density - swSur_density:.3f} kg/m³")
+plt.tight_layout()
+plt.show()
